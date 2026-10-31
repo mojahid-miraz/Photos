@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { AppState } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as MediaLibrary from 'expo-media-library';
 
@@ -23,17 +24,50 @@ export function useAlbums() {
 }
 
 export function useLibrary() {
-  const [perm, requestPerm] = MediaLibrary.usePermissions();
+  const [perm, setPerm] = useState(null);
   const [assets, setAssets] = useState([]);
-  const reload = useCallback(async () => {
-    if (!perm?.granted) return;
-    let all = [], after, more = true;
-    while (more && all.length < 3000) {
-      const r = await MediaLibrary.getAssetsAsync({ first: 500, after, mediaType: ['photo', 'video'], sortBy: [[MediaLibrary.SortBy.creationTime, false]] });
-      all = all.concat(r.assets); after = r.endCursor; more = r.hasNextPage;
-    }
-    setAssets(all);
-  }, [perm?.granted]);
-  useEffect(() => { reload(); }, [reload]);
-  return { perm, requestPerm, assets, reload };
+  const [error, setError] = useState('');
+  const [loaded, setLoaded] = useState(false);
+  const G = ['photo', 'video'];
+
+  const load = useCallback(async () => {
+    try {
+      let all = [], after, more = true;
+      while (more && all.length < 3000) {
+        const r = await MediaLibrary.getAssetsAsync({ first: 500, after, mediaType: ['photo', 'video'], sortBy: [[MediaLibrary.SortBy.creationTime, false]] });
+        all = all.concat(r.assets); after = r.endCursor; more = r.hasNextPage;
+      }
+      setAssets(all); setError('');
+    } catch (e) { setError(String((e && e.message) || e)); }
+    setLoaded(true);
+  }, []);
+
+  const requestPerm = useCallback(async () => {
+    try { const r = await MediaLibrary.requestPermissionsAsync(false, G); setPerm(r); return r; }
+    catch (e) { setError(String((e && e.message) || e)); }
+  }, []);
+
+  useEffect(() => {
+    (async () => {
+      let r = await MediaLibrary.getPermissionsAsync(false, G);
+      setPerm(r);
+      if (!r.granted) await requestPerm();
+    })().catch((e) => setError(String((e && e.message) || e)));
+  }, []);
+
+  useEffect(() => { if (perm && perm.granted) load(); }, [perm && perm.granted]);
+
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', async (st) => {
+      if (st !== 'active') return;
+      try {
+        const r = await MediaLibrary.getPermissionsAsync(false, G);
+        setPerm(r);
+        if (r.granted) load();
+      } catch (e) {}
+    });
+    return () => sub.remove();
+  }, [load]);
+
+  return { perm, requestPerm, assets, reload: load, error, loaded };
 }

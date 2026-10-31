@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Gallery",
+    "name": "Photos",
     "slug": "apple-style-gallery",
     "version": "1.0.0",
     "orientation": "default",
@@ -18,7 +18,53 @@
         "foregroundImage": "./assets/adaptive-foreground.png",
         "backgroundColor": "#F5F5F2"
       },
-      "versionCode": 1
+      "versionCode": 1,
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "category": [
+            "DEFAULT"
+          ],
+          "data": [
+            {
+              "mimeType": "image/*"
+            },
+            {
+              "mimeType": "video/*"
+            }
+          ]
+        },
+        {
+          "action": "PICK",
+          "category": [
+            "DEFAULT",
+            "OPENABLE"
+          ],
+          "data": [
+            {
+              "mimeType": "image/*"
+            },
+            {
+              "mimeType": "video/*"
+            }
+          ]
+        },
+        {
+          "action": "GET_CONTENT",
+          "category": [
+            "DEFAULT",
+            "OPENABLE"
+          ],
+          "data": [
+            {
+              "mimeType": "image/*"
+            },
+            {
+              "mimeType": "video/*"
+            }
+          ]
+        }
+      ]
     },
     "plugins": [
       [

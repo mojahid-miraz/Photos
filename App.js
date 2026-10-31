@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { BackHandler, Text, View } from 'react-native';
+import { BackHandler, Linking, Text, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
@@ -9,6 +9,7 @@ import Press from './src/components/Press';
 import LibraryScreen from './src/screens/LibraryScreen';
 import AlbumsScreen from './src/screens/AlbumsScreen';
 import AlbumScreen from './src/screens/AlbumScreen';
+import Viewer from './src/components/Viewer';
 
 export default function App() {
   const t = useTheme();
@@ -17,8 +18,16 @@ export default function App() {
   const [tab, setTab] = useState('library');
   const [openId, setOpenId] = useState(null);
   const [selecting, setSelecting] = useState(false);
+  const [incoming, setIncoming] = useState(null);
   const byId = useMemo(() => Object.fromEntries(lib.assets.map((a) => [a.id, a])), [lib.assets]);
   const album = al.albums.find((a) => a.id === openId);
+
+  useEffect(() => {
+    const ok = (u) => u && (u.startsWith('content://') || u.startsWith('file://'));
+    Linking.getInitialURL().then((u) => ok(u) && setIncoming({ uri: u })).catch(() => {});
+    const sub = Linking.addEventListener('url', ({ url }) => ok(url) && setIncoming({ uri: url }));
+    return () => sub.remove();
+  }, []);
 
   useEffect(() => {
     const h = BackHandler.addEventListener('hardwareBackPress', () => { if (openId) { setOpenId(null); return true; } return false; });
@@ -52,6 +61,7 @@ export default function App() {
             <Tab id="albums" icon="albums" label="Albums" />
           </View>
         )}
+        <Viewer asset={incoming} onClose={() => setIncoming(null)} />
       </SafeAreaView>
     </SafeAreaProvider>
   );

@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Alert, BackHandler, Text, View } from 'react-native';
+import { Alert, BackHandler, Linking, Text, View } from 'react-native';
 import * as MediaLibrary from 'expo-media-library';
 import { Ionicons } from '@expo/vector-icons';
 import PhotoGrid from '../components/PhotoGrid';
@@ -11,7 +11,7 @@ import { shareAssets, useSelection } from '../useSelection';
 import { type } from '../theme';
 
 export default function LibraryScreen({ lib, t, onSelecting }) {
-  const { assets, perm, requestPerm, reload } = lib;
+  const { assets, perm, requestPerm, reload, error, loaded } = lib;
   const [selecting, setSelecting] = useState(false);
   const [sheet, setSheet] = useState(false);
   const [open, setOpen] = useState(null);
@@ -53,6 +53,30 @@ export default function LibraryScreen({ lib, t, onSelecting }) {
       </Press>
     </View>
   );
+
+  if (loaded && assets.length === 0) {
+    return (
+      <View style={{ flex: 1 }}>
+        {header}
+        <View style={{ alignItems: 'center', padding: 32 }}>
+          <Ionicons name="alert-circle-outline" size={56} color={t.secondary} />
+          <Text style={[type.title, { color: t.label, marginTop: 12 }]}>No photos found</Text>
+          <Text style={{ color: t.secondary, textAlign: 'center', marginVertical: 8 }}>
+            Set Photos and videos access to "Allow all" in Settings, then tap Retry.
+          </Text>
+          {!!error && <Text style={{ color: t.danger, textAlign: 'center', fontSize: 12 }}>{error}</Text>}
+          <View style={{ flexDirection: 'row', gap: 12, marginTop: 16 }}>
+            <Press onPress={() => Linking.openSettings()} style={{ backgroundColor: t.tint, paddingHorizontal: 22, paddingVertical: 11, borderRadius: 22 }}>
+              <Text style={{ color: '#fff', fontWeight: '600' }}>Open Settings</Text>
+            </Press>
+            <Press onPress={async () => { await requestPerm(); reload(); }} style={{ backgroundColor: t.card, paddingHorizontal: 22, paddingVertical: 11, borderRadius: 22 }}>
+              <Text style={{ color: t.label, fontWeight: '600' }}>Retry</Text>
+            </Press>
+          </View>
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View style={{ flex: 1 }}>
