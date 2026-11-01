@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { AppState } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as MediaLibrary from 'expo-media-library';
@@ -30,16 +30,32 @@ export function useLibrary() {
   const [loaded, setLoaded] = useState(false);
   const G = ['photo', 'video'];
 
+  const busy = useRef(false);
   const load = useCallback(async () => {
+    if (busy.current) return;
+    busy.current = true;
     try {
-      let all = [], after, more = true;
-      while (more && all.length < 3000) {
-        const r = await MediaLibrary.getAssetsAsync({ first: 500, after, mediaType: ['photo', 'video'], sortBy: [[MediaLibrary.SortBy.creationTime, false]] });
+      let all = [], after, more = true, first = true;
+      while (more && all.length < 30000) {
+        const r = await MediaLibrary.getAssetsAsync({ first: first ? 300 : 1000, after, mediaType: ['photo', 'video'], sortBy: [[MediaLibrary.SortBy.creationTime, false]] });
         all = all.concat(r.assets); after = r.endCursor; more = r.hasNextPage;
+        setAssets(all);
+        if (first) { setLoaded(true); first = false; }
       }
-      setAssets(all); setError('');
+      if (all.length === 0) {
+        const seen = new Set();
+        const albums = await MediaLibrary.getAlbumsAsync({ includeSmartAlbums: true });
+        for (const al of albums) {
+          const r = await MediaLibrary.getAssetsAsync({ first: 500, album: al, mediaType: ['photo', 'video'] });
+          for (const x of r.assets) if (!seen.has(x.id)) { seen.add(x.id); all.push(x); }
+        }
+        all.sort((x, y) => y.creationTime - x.creationTime);
+        setAssets(all);
+      }
+      setError('');
     } catch (e) { setError(String((e && e.message) || e)); }
     setLoaded(true);
+    busy.current = false;
   }, []);
 
   const requestPerm = useCallback(async () => {
@@ -69,5 +85,6 @@ export function useLibrary() {
     return () => sub.remove();
   }, [load]);
 
-  return { perm, requestPerm, assets, reload: load, error, loaded };
+  const debug = `perm=${perm ? perm.status : '?'} granted=${perm ? String(perm.granted) : '?'} access=${(perm && perm.accessPrivileges) || '-'} assets=${assets.length} loaded=${String(loaded)}${error ? ' err=' + error : ''}`;
+  return { perm, requestPerm, assets, reload: load, error, loaded, debug };
 }

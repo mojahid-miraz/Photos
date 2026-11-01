@@ -11,7 +11,7 @@ const Cell = memo(function Cell({ item, size, selecting, selected, onPress, onLo
   return (
     <Press scale={0.97} hitSlop={0} onPress={() => onPress(item)} onLongPress={() => onLongPress && onLongPress(item)}>
       <View style={{ width: size, height: size, padding: 0.75 }}>
-        <Image source={{ uri: item.uri }} style={{ flex: 1, backgroundColor: t.card, opacity: selected ? 0.8 : 1 }} />
+        <Image source={{ uri: item.uri }} resizeMethod="resize" fadeDuration={0} style={{ flex: 1, backgroundColor: t.card, opacity: selected ? 0.8 : 1 }} />
         {item.mediaType === 'video' && (
           <Text style={{ position: 'absolute', left: 8, bottom: 6, color: '#fff', fontSize: 12, fontWeight: '600' }}>{fmt(item.duration)}</Text>
         )}

@@ -64,7 +64,7 @@ export default function LibraryScreen({ lib, t, onSelecting }) {
           <Text style={{ color: t.secondary, textAlign: 'center', marginVertical: 8 }}>
             Set Photos and videos access to "Allow all" in Settings, then tap Retry.
           </Text>
-          {!!error && <Text style={{ color: t.danger, textAlign: 'center', fontSize: 12 }}>{error}</Text>}
+          <Text style={{ color: t.secondary, textAlign: 'center', fontSize: 11 }}>{lib.debug}</Text>
           <View style={{ flexDirection: 'row', gap: 12, marginTop: 16 }}>
             <Press onPress={() => Linking.openSettings()} style={{ backgroundColor: t.tint, paddingHorizontal: 22, paddingVertical: 11, borderRadius: 22 }}>
               <Text style={{ color: '#fff', fontWeight: '600' }}>Open Settings</Text>

@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { Modal, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import PhotoGrid from '../components/PhotoGrid';
 import Press from '../components/Press';
 import SelectionBar from '../components/SelectionBar';
@@ -16,6 +16,7 @@ const Btn = ({ children, onPress, t }) => (
 );
 
 export default function AlbumScreen({ album, byId, assets, onBack, onAdd, onRemove, t }) {
+  const insets = useSafeAreaInsets();
   const [sort, setSort] = useState('added');
   const [filter, setFilter] = useState('all');
   const [menu, setMenu] = useState(false);
@@ -58,7 +59,7 @@ export default function AlbumScreen({ album, byId, assets, onBack, onAdd, onRemo
         onPress={(i) => (selecting ? sel.toggle(i.id) : setOpen(i))}
         onLongPress={(i) => { setSelecting(true); sel.toggle(i.id); }} />
       {!selecting && (
-        <View style={{ position: 'absolute', right: 20, bottom: 24 }}>
+        <View style={{ position: 'absolute', right: 20, bottom: 24 + Math.max(insets.bottom, 12) }}>
           <Press onPress={() => { pick.clear(); setPicker(true); }} style={{ width: 56, height: 56, borderRadius: 28, backgroundColor: t.tint, alignItems: 'center', justifyContent: 'center', elevation: 6 }}>
             <Ionicons name="add" size={30} color="#fff" />
           </Press>
